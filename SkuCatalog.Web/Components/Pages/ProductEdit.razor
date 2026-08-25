@@ -1,0 +1,138 @@
+@page "/products/new"
+@page "/products/edit/{Id:int}"
+@using Microsoft.EntityFrameworkCore
+@using SkuCatalog.Data
+@using SkuCatalog.Data.Models
+@inject IDbContextFactory<CatalogDbContext> DbFactory
+@inject NavigationManager Nav
+
+<PageTitle>@(Id is null ? "Add product" : "Edit product") - SKU Catalog Manager</PageTitle>
+
+<h1>@(Id is null ? "Add product" : "Edit product")</h1>
+
+@if (product is null)
+{
+    <p class="status-line">Loading...</p>
+}
+else
+{
+    <EditForm Model="product" OnValidSubmit="SaveAsync" FormName="product-form" class="product-form">
+        <DataAnnotationsValidator />
+
+        @if (errorMessage is not null)
+        {
+            <div class="alert alert-danger" role="alert">@errorMessage</div>
+        }
+
+        <div class="form-row">
+            <label for="sku">SKU</label>
+            <InputText id="sku" class="form-control" @bind-Value="product.Sku" />
+            <ValidationMessage For="() => product.Sku" />
+        </div>
+
+        <div class="form-row">
+            <label for="name">Name</label>
+            <InputText id="name" class="form-control" @bind-Value="product.Name" />
+            <ValidationMessage For="() => product.Name" />
+        </div>
+
+        <div class="form-row">
+            <label for="category">Category</label>
+            <InputSelect id="category" class="form-control" @bind-Value="product.CategoryId">
+                <option value="0">-- choose a category --</option>
+                @foreach (var category in categories)
+                {
+                    <option value="@category.Id">@category.Name</option>
+                }
+            </InputSelect>
+            <ValidationMessage For="() => product.CategoryId" />
+        </div>
+
+        <div class="form-row">
+            <label for="price">Price</label>
+            <InputNumber id="price" class="form-control" @bind-Value="product.Price" step="0.01" />
+            <ValidationMessage For="() => product.Price" />
+        </div>
+
+        <div class="form-row">
+            <label for="quantity">Quantity</label>
+            <InputNumber id="quantity" class="form-control" @bind-Value="product.Quantity" />
+            <ValidationMessage For="() => product.Quantity" />
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary" disabled="@isSaving">
+                @(isSaving ? "Saving..." : "Save")
+            </button>
+            <a class="btn btn-secondary" href="products">Cancel</a>
+        </div>
+    </EditForm>
+}
+
+@code {
+    [Parameter]
+    public int? Id { get; set; }
+
+    private Product? product;
+    private List<Category> categories = new();
+    private string? errorMessage;
+    private bool isSaving;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await using var db = await DbFactory.CreateDbContextAsync();
+
+        categories = await db.Categories
+            .AsNoTracking()
+            .OrderBy(c => c.Name)
+            .ToListAsync();
+
+        if (Id is null)
+        {
+            product = new Product();
+            return;
+        }
+
+        product = await db.Products
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p => p.Id == Id);
+
+        if (product is null)
+        {
+            // The id matched nothing. Send them back rather than showing a broken form.
+            Nav.NavigateTo("/products");
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        errorMessage = null;
+        isSaving = true;
+
+        try
+        {
+            await using var db = await DbFactory.CreateDbContextAsync();
+
+            if (product!.Id == 0)
+            {
+                db.Products.Add(product);
+            }
+            else
+            {
+                db.Products.Update(product);
+            }
+
+            await db.SaveChangesAsync();
+            Nav.NavigateTo("/products");
+        }
+        catch (DbUpdateException)
+        {
+            // The unique index rejected it. Almost always a duplicate SKU.
+            errorMessage = $"SKU '{product!.Sku}' is already in use. Pick a different one.";
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+}
