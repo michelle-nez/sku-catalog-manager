@@ -1,7 +1,7 @@
 # SKU Catalog Manager
 
 A small product catalog for e-commerce SKUs - add, find, correct, and retire the
-products you list. Built to practise EF Core and SQL Server schema design.
+products you list. Built to practice EF Core and SQL Server schema design.
 
 ![Product list](screenshots/product-list.png)
 
@@ -79,4 +79,4 @@ placeholder so the setting's shape is documented without a value in the repo.
 
 ---
 
-Self-directed portfolio project. Not built for an employer.
+Self-directed portfolio project.
