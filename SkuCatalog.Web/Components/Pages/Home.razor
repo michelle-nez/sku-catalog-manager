@@ -1,0 +1,22 @@
+@page "/"
+
+<PageTitle>SKU Catalog Manager</PageTitle>
+
+<h1>SKU Catalog Manager</h1>
+
+<p class="lead">
+    One place to manage the products you list. Add a product, find it, correct it,
+    and retire the ones you no longer sell.
+</p>
+
+<div class="home-panel">
+    <h2>What it does</h2>
+    <ul>
+        <li>Products and categories stored in two related SQL Server tables.</li>
+        <li>A unique index on SKU, enforced by the database rather than the screen.</li>
+        <li>Retiring a product hides it and keeps the record - nothing is deleted.</li>
+        <li>Validation driven by data annotations on the model.</li>
+    </ul>
+
+    <a class="btn btn-primary" href="products">Open the catalog</a>
+</div>

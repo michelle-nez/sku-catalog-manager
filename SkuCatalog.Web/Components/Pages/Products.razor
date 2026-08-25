@@ -1,0 +1,111 @@
+@page "/products"
+@using Microsoft.EntityFrameworkCore
+@using SkuCatalog.Data
+@using SkuCatalog.Data.Models
+@inject IDbContextFactory<CatalogDbContext> DbFactory
+
+<PageTitle>Products - SKU Catalog Manager</PageTitle>
+
+<div class="list-header">
+    <h1>Products</h1>
+    <a class="btn btn-primary" href="products/new">Add product</a>
+</div>
+
+@if (products is null)
+{
+    <p class="status-line">Loading...</p>
+}
+else if (products.Count == 0)
+{
+    <div class="empty-state">
+        <p><strong>No products yet.</strong></p>
+        <p>Add your first product to get started.</p>
+        <a class="btn btn-primary" href="products/new">Add product</a>
+    </div>
+}
+else
+{
+    <p class="status-line">@products.Count active @(products.Count == 1 ? "product" : "products")</p>
+
+    <table class="catalog-table">
+        <thead>
+            <tr>
+                <th>SKU</th>
+                <th>Name</th>
+                <th>Category</th>
+                <th class="numeric">Price</th>
+                <th class="numeric">Qty</th>
+                <th><span class="visually-hidden">Actions</span></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var product in products)
+            {
+                <tr>
+                    <td data-label="SKU"><span class="sku">@product.Sku</span></td>
+                    <td data-label="Name">@product.Name</td>
+                    <td data-label="Category">@product.Category?.Name</td>
+                    <td data-label="Price" class="numeric">@product.Price.ToString("C")</td>
+                    <td data-label="Qty" class="numeric">@product.Quantity</td>
+                    <td data-label="" class="actions">
+                        @if (pendingRetireId == product.Id)
+                        {
+                            <span class="confirm-text">Retire this product?</span>
+                            <button type="button" class="btn btn-danger btn-sm"
+                                    @onclick="() => RetireAsync(product.Id)">Yes, retire</button>
+                            <button type="button" class="btn btn-link btn-sm"
+                                    @onclick="() => pendingRetireId = null">Cancel</button>
+                        }
+                        else
+                        {
+                            <a class="btn btn-secondary btn-sm" href="@($"products/edit/{product.Id}")">Edit</a>
+                            <button type="button" class="btn btn-outline-danger btn-sm"
+                                    @onclick="() => pendingRetireId = product.Id">Retire</button>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<Product>? products;
+    private int? pendingRetireId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProductsAsync();
+    }
+
+    private async Task LoadProductsAsync()
+    {
+        await using var db = await DbFactory.CreateDbContextAsync();
+
+        // AsNoTracking - these rows are being displayed, not edited.
+        products = await db.Products
+            .AsNoTracking()
+            .Include(p => p.Category)
+            .Where(p => p.IsActive)
+            .OrderBy(p => p.Sku)
+            .ToListAsync();
+    }
+
+    private async Task RetireAsync(int productId)
+    {
+        pendingRetireId = null;
+
+        await using var db = await DbFactory.CreateDbContextAsync();
+
+        var product = await db.Products.FirstOrDefaultAsync(p => p.Id == productId);
+
+        if (product is not null)
+        {
+            // Hide it, do not destroy it. The list query already filters on IsActive.
+            product.IsActive = false;
+            await db.SaveChangesAsync();
+        }
+
+        await LoadProductsAsync();
+    }
+}
