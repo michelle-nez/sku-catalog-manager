@@ -8,65 +8,54 @@
 
 <PageTitle>@(Id is null ? "Add product" : "Edit product") - SKU Catalog Manager</PageTitle>
 
-<h1>@(Id is null ? "Add product" : "Edit product")</h1>
+<MudText Typo="Typo.h5" Class="mb-4">@(Id is null ? "Add product" : "Edit product")</MudText>
 
 @if (product is null)
 {
-    <p class="status-line">Loading...</p>
+    <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-4" />
 }
 else
 {
-    <EditForm Model="product" OnValidSubmit="SaveAsync" FormName="product-form" class="product-form">
-        <DataAnnotationsValidator />
+    <MudPaper Elevation="1" Class="pa-6" Style="max-width:560px;">
+        <EditForm Model="product" OnValidSubmit="SaveAsync" FormName="product-form">
+            <DataAnnotationsValidator />
 
-        @if (errorMessage is not null)
-        {
-            <div class="alert alert-danger" role="alert">@errorMessage</div>
-        }
+            @if (errorMessage is not null)
+            {
+                <MudAlert Severity="Severity.Error" Class="mb-4" Dense="true">@errorMessage</MudAlert>
+            }
 
-        <div class="form-row">
-            <label for="sku">SKU</label>
-            <InputText id="sku" class="form-control" @bind-Value="product.Sku" />
-            <ValidationMessage For="() => product.Sku" />
-        </div>
+            <MudTextField @bind-Value="product.Sku" Label="SKU" For="() => product.Sku"
+                          Variant="Variant.Outlined" Margin="Margin.Dense" Class="mb-3" />
 
-        <div class="form-row">
-            <label for="name">Name</label>
-            <InputText id="name" class="form-control" @bind-Value="product.Name" />
-            <ValidationMessage For="() => product.Name" />
-        </div>
+            <MudTextField @bind-Value="product.Name" Label="Name" For="() => product.Name"
+                          Variant="Variant.Outlined" Margin="Margin.Dense" Class="mb-3" />
 
-        <div class="form-row">
-            <label for="category">Category</label>
-            <InputSelect id="category" class="form-control" @bind-Value="product.CategoryId">
-                <option value="0">-- choose a category --</option>
+            <MudSelect @bind-Value="product.CategoryId" Label="Category" For="() => product.CategoryId"
+                       Variant="Variant.Outlined" Margin="Margin.Dense" Class="mb-3">
+                <MudSelectItem T="int" Value="0">-- choose a category --</MudSelectItem>
                 @foreach (var category in categories)
                 {
-                    <option value="@category.Id">@category.Name</option>
+                    <MudSelectItem T="int" Value="@category.Id">@category.Name</MudSelectItem>
                 }
-            </InputSelect>
-            <ValidationMessage For="() => product.CategoryId" />
-        </div>
+            </MudSelect>
 
-        <div class="form-row">
-            <label for="price">Price</label>
-            <InputNumber id="price" class="form-control" @bind-Value="product.Price" step="0.01" />
-            <ValidationMessage For="() => product.Price" />
-        </div>
+            <MudNumericField @bind-Value="product.Price" Label="Price" For="() => product.Price"
+                             Variant="Variant.Outlined" Margin="Margin.Dense" Step="0.01M"
+                             Format="F2" Class="mb-3" />
 
-        <div class="form-row">
-            <label for="quantity">Quantity</label>
-            <InputNumber id="quantity" class="form-control" @bind-Value="product.Quantity" />
-            <ValidationMessage For="() => product.Quantity" />
-        </div>
+            <MudNumericField @bind-Value="product.Quantity" Label="Quantity" For="() => product.Quantity"
+                             Variant="Variant.Outlined" Margin="Margin.Dense" Class="mb-4" />
 
-        <div class="form-actions">
-            <button type="submit" class="btn btn-primary" disabled="@isSaving">
-                @(isSaving ? "Saving..." : "Save")
-            </button>
-            <a class="btn btn-secondary" href="products">Cancel</a>
-        </div>
-    </EditForm>
+            <div class="d-flex gap-2">
+                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary"
+                           Disabled="isSaving">
+                    @(isSaving ? "Saving..." : "Save")
+                </MudButton>
+                <MudButton Href="/products" Variant="Variant.Text">Cancel</MudButton>
+            </div>
+        </EditForm>
+    </MudPaper>
 }
 
 @code {

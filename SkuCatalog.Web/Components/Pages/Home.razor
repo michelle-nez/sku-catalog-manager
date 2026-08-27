@@ -2,21 +2,46 @@
 
 <PageTitle>SKU Catalog Manager</PageTitle>
 
-<h1>SKU Catalog Manager</h1>
-
-<p class="lead">
+<MudText Typo="Typo.h4" Class="mb-2">SKU Catalog Manager</MudText>
+<MudText Typo="Typo.subtitle1" Color="Color.Secondary" Class="mb-6" Style="max-width:44rem;">
     One place to manage the products you list. Add a product, find it, correct it,
     and retire the ones you no longer sell.
-</p>
+</MudText>
 
-<div class="home-panel">
-    <h2>What it does</h2>
-    <ul>
-        <li>Products and categories stored in two related SQL Server tables.</li>
-        <li>A unique index on SKU, enforced by the database rather than the screen.</li>
-        <li>Retiring a product hides it and keeps the record - nothing is deleted.</li>
-        <li>Validation driven by data annotations on the model.</li>
-    </ul>
-
-    <a class="btn btn-primary" href="products">Open the catalog</a>
-</div>
+<MudGrid Spacing="4">
+    <MudItem xs="12" md="7">
+        <MudPaper Elevation="1" Class="pa-6 h-100">
+            <MudText Typo="Typo.h6" Class="mb-3">What it does</MudText>
+            <MudList T="string" Dense="true">
+                <MudListItem T="string" Icon="@Icons.Material.Outlined.Storage">
+                    Products and categories in two related SQL Server tables
+                </MudListItem>
+                <MudListItem T="string" Icon="@Icons.Material.Outlined.Key">
+                    A unique index on SKU, enforced by the database rather than the screen
+                </MudListItem>
+                <MudListItem T="string" Icon="@Icons.Material.Outlined.Archive">
+                    Retiring a product hides it and keeps the record
+                </MudListItem>
+                <MudListItem T="string" Icon="@Icons.Material.Outlined.Rule">
+                    Validation driven by data annotations on the model
+                </MudListItem>
+            </MudList>
+            <MudButton Href="/products" Variant="Variant.Filled" Color="Color.Primary" Class="mt-4"
+                       EndIcon="@Icons.Material.Outlined.ArrowForward">
+                Open the catalog
+            </MudButton>
+        </MudPaper>
+    </MudItem>
+    <MudItem xs="12" md="5">
+        <MudPaper Elevation="0" Class="pa-6 h-100" Style="border:1px solid var(--mud-palette-divider);">
+            <MudText Typo="Typo.h6" Class="mb-3">Built with</MudText>
+            <div class="d-flex flex-wrap gap-2">
+                <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined">.NET 10</MudChip>
+                <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined">Blazor Server</MudChip>
+                <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined">EF Core 10</MudChip>
+                <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined">SQL Server</MudChip>
+                <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined">MudBlazor</MudChip>
+            </div>
+        </MudPaper>
+    </MudItem>
+</MudGrid>

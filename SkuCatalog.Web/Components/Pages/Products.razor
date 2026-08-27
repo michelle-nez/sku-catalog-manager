@@ -6,67 +6,83 @@
 
 <PageTitle>Products - SKU Catalog Manager</PageTitle>
 
-<div class="list-header">
-    <h1>Products</h1>
-    <a class="btn btn-primary" href="products/new">Add product</a>
+<div class="d-flex flex-wrap align-center justify-space-between mb-4 gap-3">
+    <div>
+        <MudText Typo="Typo.h5">Products</MudText>
+        @if (products is not null)
+        {
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                @products.Count active @(products.Count == 1 ? "product" : "products")
+            </MudText>
+        }
+    </div>
+    <MudButton Href="/products/new" Variant="Variant.Filled" Color="Color.Primary"
+               StartIcon="@Icons.Material.Outlined.Add">
+        Add product
+    </MudButton>
 </div>
 
 @if (products is null)
 {
-    <p class="status-line">Loading...</p>
+    <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-4" />
 }
 else if (products.Count == 0)
 {
-    <div class="empty-state">
-        <p><strong>No products yet.</strong></p>
-        <p>Add your first product to get started.</p>
-        <a class="btn btn-primary" href="products/new">Add product</a>
-    </div>
+    <MudPaper Elevation="0" Class="pa-8 d-flex flex-column align-center" Style="border:1px dashed var(--mud-palette-divider);">
+        <MudIcon Icon="@Icons.Material.Outlined.Inventory2" Size="Size.Large" Color="Color.Secondary" />
+        <MudText Typo="Typo.h6" Class="mt-3">No products yet</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
+            Add your first product to get started.
+        </MudText>
+        <MudButton Href="/products/new" Variant="Variant.Filled" Color="Color.Primary">Add product</MudButton>
+    </MudPaper>
 }
 else
 {
-    <p class="status-line">@products.Count active @(products.Count == 1 ? "product" : "products")</p>
-
-    <table class="catalog-table">
-        <thead>
-            <tr>
-                <th>SKU</th>
-                <th>Name</th>
-                <th>Category</th>
-                <th class="numeric">Price</th>
-                <th class="numeric">Qty</th>
-                <th><span class="visually-hidden">Actions</span></th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var product in products)
-            {
-                <tr>
-                    <td data-label="SKU"><span class="sku">@product.Sku</span></td>
-                    <td data-label="Name">@product.Name</td>
-                    <td data-label="Category">@product.Category?.Name</td>
-                    <td data-label="Price" class="numeric">@product.Price.ToString("C")</td>
-                    <td data-label="Qty" class="numeric">@product.Quantity</td>
-                    <td data-label="" class="actions">
-                        @if (pendingRetireId == product.Id)
-                        {
-                            <span class="confirm-text">Retire this product?</span>
-                            <button type="button" class="btn btn-danger btn-sm"
-                                    @onclick="() => RetireAsync(product.Id)">Yes, retire</button>
-                            <button type="button" class="btn btn-link btn-sm"
-                                    @onclick="() => pendingRetireId = null">Cancel</button>
-                        }
-                        else
-                        {
-                            <a class="btn btn-secondary btn-sm" href="@($"products/edit/{product.Id}")">Edit</a>
-                            <button type="button" class="btn btn-outline-danger btn-sm"
-                                    @onclick="() => pendingRetireId = product.Id">Retire</button>
-                        }
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
+    <MudPaper Elevation="1" Class="pa-0">
+        <MudTable Items="products" Hover="true" Breakpoint="Breakpoint.Sm" Elevation="0" Dense="false">
+            <HeaderContent>
+                <MudTh>SKU</MudTh>
+                <MudTh>Name</MudTh>
+                <MudTh>Category</MudTh>
+                <MudTh Style="text-align:right">Price</MudTh>
+                <MudTh Style="text-align:right">Qty</MudTh>
+                <MudTh Style="text-align:right">Actions</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="SKU">
+                    <MudText Typo="Typo.body2" Style="font-family:Consolas,monospace;">@context.Sku</MudText>
+                </MudTd>
+                <MudTd DataLabel="Name">@context.Name</MudTd>
+                <MudTd DataLabel="Category">
+                    <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Color="Color.Primary">
+                        @context.Category?.Name
+                    </MudChip>
+                </MudTd>
+                <MudTd DataLabel="Price" Style="text-align:right">@context.Price.ToString("C")</MudTd>
+                <MudTd DataLabel="Qty" Style="text-align:right">@context.Quantity</MudTd>
+                <MudTd DataLabel="" Style="text-align:right">
+                    @if (pendingRetireId == context.Id)
+                    {
+                        <div class="d-flex align-center justify-end gap-1">
+                            <MudText Typo="Typo.caption" Color="Color.Error">Retire?</MudText>
+                            <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Error"
+                                       OnClick="@(() => RetireAsync(context.Id))">Yes</MudButton>
+                            <MudButton Size="Size.Small" Variant="Variant.Text"
+                                       OnClick="@(() => pendingRetireId = null)">Cancel</MudButton>
+                        </div>
+                    }
+                    else
+                    {
+                        <MudIconButton Icon="@Icons.Material.Outlined.Edit" Size="Size.Small" Color="Color.Primary"
+                                       Href="@($"/products/edit/{context.Id}")" aria-label="Edit" />
+                        <MudIconButton Icon="@Icons.Material.Outlined.Archive" Size="Size.Small" Color="Color.Error"
+                                       OnClick="@(() => pendingRetireId = context.Id)" aria-label="Retire" />
+                    }
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    </MudPaper>
 }
 
 @code {
