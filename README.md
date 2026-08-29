@@ -117,6 +117,10 @@ What I would add next:
 - A view for retired products, with a way to bring one back
 - Unit tests over the save logic
 
+## License
+
+MIT - see [LICENSE](LICENSE).
+
 ---
 
 Self-directed portfolio project.
