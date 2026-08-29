@@ -245,26 +245,23 @@ await db.SaveChangesAsync();
 ```
 
 **Saving** (`ProductEdit.razor`) branches on the id — `Add` for a new product,
-`Update` for an existing one — then catches `DbUpdateException` and reports it as a
-duplicate SKU.
+`Update` for an existing one — then handles `DbUpdateException`.
 
 Two details of that path worth knowing:
 
 - `Update()` marks **every** column modified, including `CreatedUtc`. The value
   survives because the form edits the entity that was loaded from the database, so the
   original timestamp is still on the object when it is saved back.
-- The `DbUpdateException` handler assumes the failure was the unique index. Any other
-  save failure — a timeout, a dropped connection, a foreign key violation — is also
-  reported to the user as a duplicate SKU. See
-  [Not implemented](#not-implemented).
+- **The duplicate-SKU message is matched on the SQL error number**, not assumed. A
+  `DbUpdateException` whose inner `SqlException` is 2601 or 2627 — SQL Server's unique
+  index and unique constraint violations — produces "SKU 'X' is already in use." Any
+  other save failure gets a plain "Could not save this product" and the real exception
+  is written to the log, so a timeout is never disguised as a duplicate.
 
 ## Not implemented
 
 Recommendations and known gaps. **None of the following is in the code today.**
 
-- **Narrower exception handling.** The duplicate-SKU catch should inspect the SQL error
-  number (2601 / 2627 for a unique constraint violation) and let anything else surface
-  as a genuine error instead of a misleading message.
 - **A filtered unique index** on `Sku`, if retired SKUs should ever become reusable.
 - **Paging.** The list query loads every active product in one go.
 - **Search and filtering**, including by category.

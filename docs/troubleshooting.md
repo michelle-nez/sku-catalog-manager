@@ -122,15 +122,14 @@ SELECT Id, Sku, Name, IsActive FROM Products WHERE Sku = 'X';
 An `IsActive = 0` row is the culprit. Fully explained in
 [database.md](database.md#one-consequence-worth-knowing).
 
-### Every save failure says "SKU is already in use"
+### "Could not save this product. Please try again."
 
-**A known issue in the code, not a configuration problem.** `ProductEdit.SaveAsync`
-catches `DbUpdateException` and reports all of them as a duplicate SKU. A timeout, a
-dropped connection or a foreign key violation all produce the same misleading message.
+The generic save failure. It means the save threw something that was **not** a
+duplicate SKU — a timeout, a dropped connection, or a foreign key violation.
 
-If the SQL above shows no conflicting row, look at the real exception — set a
-breakpoint in the `catch`, or check the console output. Listed under
-[architecture.md → Recommendations](architecture.md#recommendations).
+The real exception is written to the log, so check the console output of the running
+app: look for `Failed to save product <SKU>` followed by the exception. The message is
+deliberately vague on screen and specific in the log.
 
 ### Editing a seeded category name does nothing
 
@@ -186,14 +185,6 @@ silently does nothing.
 The Blazor Server circuit dropped. This is normal after the app restarts during
 debugging — reload the page. If it happens repeatedly while idle, something is
 interrupting the WebSocket connection: a proxy, a VPN, or an aggressive firewall.
-
-### The error page is plain and the headings are not red
-
-**A known cosmetic issue.** `Error.razor` styles its headings with `text-danger`, a
-Bootstrap class, and Bootstrap is not linked in `App.razor` — the class resolves to
-nothing. `Error.razor` and `NotFound.razor` are both still stock template pages in an
-otherwise MudBlazor app. See
-[architecture.md → Recommendations](architecture.md#recommendations).
 
 ### An unknown product id shows a blank form
 

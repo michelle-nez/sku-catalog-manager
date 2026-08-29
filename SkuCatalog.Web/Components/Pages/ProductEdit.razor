@@ -1,10 +1,12 @@
-@page "/products/new"
+﻿@page "/products/new"
 @page "/products/edit/{Id:int}"
 @using Microsoft.EntityFrameworkCore
 @using SkuCatalog.Data
 @using SkuCatalog.Data.Models
+@using Microsoft.Data.SqlClient
 @inject IDbContextFactory<CatalogDbContext> DbFactory
 @inject NavigationManager Nav
+@inject ILogger<ProductEdit> Logger
 
 <PageTitle>@(Id is null ? "Add product" : "Edit product") - SKU Catalog Manager</PageTitle>
 
@@ -93,6 +95,12 @@ else
         }
     }
 
+    // SQL Server reports a unique index or unique constraint violation as error
+    // 2601 or 2627. Matching on the number keeps the duplicate-SKU message tied to
+    // the one failure it actually describes.
+    private static bool IsDuplicateSku(DbUpdateException ex) =>
+        ex.InnerException is SqlException sql && (sql.Number == 2601 || sql.Number == 2627);
+
     private async Task SaveAsync()
     {
         errorMessage = null;
@@ -114,10 +122,17 @@ else
             await db.SaveChangesAsync();
             Nav.NavigateTo("/products");
         }
-        catch (DbUpdateException)
+        catch (DbUpdateException ex) when (IsDuplicateSku(ex))
         {
-            // The unique index rejected it. Almost always a duplicate SKU.
             errorMessage = $"SKU '{product!.Sku}' is already in use. Pick a different one.";
+        }
+        catch (DbUpdateException ex)
+        {
+            // Any other save failure - a timeout, a dropped connection, a foreign key
+            // violation. Reporting these as a duplicate SKU sends people looking in
+            // the wrong place, so say something honest and log the real cause.
+            Logger.LogError(ex, "Failed to save product {Sku}", product!.Sku);
+            errorMessage = "Could not save this product. Please try again.";
         }
         finally
         {

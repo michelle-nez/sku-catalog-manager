@@ -180,7 +180,8 @@ category --" being submitted.
 | Unhandled exception | `UseExceptionHandler("/Error")` — production only; development shows the developer exception page |
 | Unknown URL | `UseStatusCodePagesWithReExecute("/not-found")` |
 | Unknown product id | `ProductEdit` redirects to `/products` rather than rendering an empty form |
-| Duplicate SKU | `DbUpdateException` caught, message shown, typed values kept |
+| Duplicate SKU | `DbUpdateException` whose inner `SqlException` is 2601/2627; message shown, typed values kept |
+| Any other save failure | Generic message on screen, real exception written to the log |
 | Circuit dropped | `ReconnectModal` overlay |
 
 `BlazorDisableThrowNavigationException` is set to `true` in the csproj, so
@@ -215,19 +216,28 @@ grows, listed so the gap between "current" and "possible" stays visible.
 | Recommendation | Why |
 |---|---|
 | Move query logic into a `ProductService` in the Data project | Only worth it once a second screen needs the same query, or the save logic needs testing without a browser |
-| Narrow the `DbUpdateException` catch | It currently reports every save failure as a duplicate SKU — a timeout or dropped connection shows the wrong message |
 | Add a test project | There is none. The save path and the soft-delete filter are the obvious first targets |
 | Add a concurrency token | Two people editing the same product silently overwrite each other |
 
-### Two inconsistencies found while documenting
+### Cleanup done while documenting
 
-Neither has been changed — flagging only.
+Writing these docs surfaced three leftovers from before the MudBlazor restyle. All
+three are **fixed** — recorded here because the reasoning is worth keeping.
 
-1. **`Error.razor` and `NotFound.razor` are stock template pages**, plain HTML in a
-   MudBlazor app. `Error.razor` styles its headings with `class="text-danger"`, a
-   **Bootstrap** class. Bootstrap is not linked in `App.razor`, so that class resolves
-   to nothing and the error headings render in the default color rather than red.
-2. **`wwwroot/lib/bootstrap/` is dead weight** — 16 CSS files that nothing references,
-   plus `app.css`, which is still the stock Bootstrap-flavored template stylesheet
-   styling elements this app no longer has. Both are left over from before the
-   MudBlazor restyle.
+1. **`wwwroot/lib/bootstrap/` was dead weight** — 16 CSS files that nothing
+   referenced. `App.razor` links only `app.css`, the scoped stylesheet, Roboto and
+   MudBlazor. Deleted.
+2. **`Error.razor` styled its headings with `text-danger`**, a Bootstrap class, in an
+   app where Bootstrap is not linked — so it resolved to nothing and the headings
+   rendered in the default color instead of red. That was the concrete cost of keeping
+   the dead folder: it was not only unused files, something rendered wrong because of
+   it. Both `Error.razor` and `NotFound.razor` are now MudBlazor pages consistent with
+   the rest of the app.
+3. **`app.css` was the stock template stylesheet** plus a hand-written table and form
+   layout from the pre-MudBlazor UI. Every rule was verified unused before removal: no
+   markup referenced the custom classes, and MudBlazor's inputs carry only `mud-*`
+   classes, so even the EditForm validation hooks (`.valid`, `.modified`, `.invalid`)
+   matched nothing. Reduced to a comment explaining where styling actually lives.
+
+**`#blazor-error-ui` was checked before touching any of this** — it is styled by
+MudBlazor and the framework, not by `app.css`, so it is still correctly hidden.
