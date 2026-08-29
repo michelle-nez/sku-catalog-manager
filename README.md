@@ -1,79 +1,117 @@
 # SKU Catalog Manager
 
-A small product catalog for e-commerce SKUs - add, find, correct, and retire the
-products you list. Built to practice EF Core and SQL Server schema design.
+A small product catalog for the SKUs an e-commerce seller lists — add a product,
+correct it, and retire it once it stops selling. Built to demonstrate EF Core and
+SQL Server schema design in a .NET 10 Blazor Server application.
 
 ![Product list](screenshots/product-list.png)
 
-## Stack
+## The problem it solves
 
-- .NET 10, Blazor Server (interactive server rendering)
-- Entity Framework Core 10
-- SQL Server (LocalDB in development)
+Small sellers keep their catalog in a spreadsheet until the spreadsheet stops being
+trustworthy: the same SKU typed twice, prices stored as text, and rows deleted that
+turn out to have been needed. This app puts the same data behind a real schema, so
+the rules are enforced by the database rather than by whoever is editing the file.
 
-## What it does
+- A duplicate SKU is rejected by a **unique index**, not by a screen that can be worked around
+- Prices are **`decimal(18,2)`** — exact, never a floating point type
+- Retiring a product **hides it and keeps the row**, so history survives
 
-- Products and categories in two related SQL Server tables
-- Unique index on SKU, enforced by the database rather than the screen
-- Soft delete - retiring a product hides it and keeps the record
-- Server-side validation driven by data annotations
-- Responsive layout - the table becomes stacked cards on a phone
+## Features
 
-## The schema
+Implemented today:
 
-```
-dbo.Categories
-    Id              int, primary key, identity
-    Name            nvarchar(60), not null
+- List active products with category, price and quantity
+- Add a product, with server-side validation driven by data annotations
+- Edit an existing product — an unknown id redirects rather than showing a broken form
+- Retire a product (soft delete) behind a two-step confirm
+- Duplicate SKUs are reported without discarding what was typed
+- Responsive layout — the table becomes stacked cards at phone width
 
-dbo.Products
-    Id              int, primary key, identity
-    Sku             nvarchar(40), not null, UNIQUE index
-    Name            nvarchar(200), not null
-    Price           decimal(18,2), not null
-    Quantity        int, not null
-    IsActive        bit, not null
-    CreatedUtc      datetime2, not null
-    CategoryId      int, not null, foreign key -> Categories.Id
-```
+Not implemented: search, filtering, paging, authentication, and a screen for retired
+products. See [Project status](#project-status).
 
-`Price` is `decimal(18,2)`, not a floating point type - money has to be exact.
-Categories are seeded by the migration so the dropdown is never empty on a fresh
-database.
+![Add and edit form](screenshots/product-form.png)
 
-## Project layout
+## Technology stack
 
-| Project | What it holds |
+| Layer | Choice |
 |---|---|
-| `SkuCatalog.Web` | Blazor Server app - the screens |
-| `SkuCatalog.Data` | Models, `CatalogDbContext`, and EF Core migrations |
+| Framework | .NET 10, Blazor Server (Interactive Server rendering) |
+| UI | MudBlazor 9.9.0 |
+| Data access | Entity Framework Core 10 |
+| Database | SQL Server — LocalDB in development |
 
-The reference points one way only: Web references Data, never the reverse.
+**There is no HTTP API in this project, and no Swagger/OpenAPI.** It is a
+server-rendered Blazor application: the Razor components query EF Core directly
+through an injected `IDbContextFactory<CatalogDbContext>`. There are no controllers
+or minimal-API endpoints to call from outside the app.
+
+## Solution structure
+
+| Project | Holds |
+|---|---|
+| `SkuCatalog.Web` | Blazor Server app — routed pages, layout, MudBlazor theme, startup |
+| `SkuCatalog.Data` | `CatalogDbContext`, the `Product` and `Category` models, EF Core migrations |
+
+The project reference points **one way only**: Web references Data, never the reverse.
 
 The context is registered with `AddDbContextFactory`, not `AddDbContext`. Blazor
 Server components are long-lived and several can run at once, so each operation
-gets its own short-lived context instead of sharing one.
+creates its own short-lived context instead of sharing one. Sharing produces
+intermittent "a second operation was started on this context" failures, and
+retrofitting the factory later means touching every page.
 
-## Running it locally
+## Requirements
+
+- Visual Studio 2026 with the ASP.NET and web development workload
+- .NET 10 SDK
+- SQL Server LocalDB (installed with Visual Studio) — or any SQL Server instance
+
+## Getting it running
 
 1. Open `SkuCatalogManager.sln` in Visual Studio 2026.
-2. Right-click `SkuCatalog.Web` and choose **Manage User Secrets**.
-3. Add a `ConnectionStrings:CatalogDatabase` value pointing at your local
-   SQL Server LocalDB instance (`(localdb)\MSSQLLocalDB`), with the database
-   named `SkuCatalogManager` and a trusted connection. See
-   `appsettings.json` for the setting's shape.
+2. Right-click **`SkuCatalog.Web`** → **Manage User Secrets**, and add a connection
+   string named `CatalogDatabase` pointing at your LocalDB instance
+   (`(localdb)\MSSQLLocalDB`) with the database named `SkuCatalogManager`.
+   `appsettings.json` keeps the key with a blank value so the shape is documented
+   without a credential in the repository.
+3. Apply the migration. In **Package Manager Console** set **Default project** to
+   `SkuCatalog.Data` **and** make sure the **startup project is `SkuCatalog.Web`** —
+   the EF Core tools and the connection string both live there — then run:
 
-4. In the Package Manager Console, set **Default project** to `SkuCatalog.Data`
-   and run `Update-Database`.
-5. Run the project and open `/products`.
+   ```powershell
+   Update-Database
+   ```
 
-The connection string lives in User Secrets only. `appsettings.json` keeps a blank
-placeholder so the setting's shape is documented without a value in the repo.
+4. Press F5 and open `/products`.
 
-## What I would do next
+The database is **not** created automatically at startup; step 3 is required on a
+fresh clone. Four starter categories are seeded by the migration, so the category
+dropdown is never empty on first run.
 
-- Server-side paging once the catalog outgrows a single page
+The CLI equivalent of step 3, and what to do when it fails, is in
+[docs/database.md](docs/database.md#migrations).
+
+## Documentation
+
+| Document | Covers |
+|---|---|
+| [docs/database.md](docs/database.md) | Schema, entities, relationships, indexes, migrations, seed data, ER diagram |
+
+Being written next: architecture, getting started, configuration, and troubleshooting.
+
+## Project status
+
+Working and complete for what it sets out to prove: a real SQL Server schema, EF Core
+migrations, a relationship between two tables, and screens that read and write. It is
+a portfolio project rather than a product, and is not deployed to a public URL — it
+runs locally against LocalDB.
+
+What I would add next:
+
 - Search and filter by category
+- Server-side paging, once the catalog outgrows one page
 - A view for retired products, with a way to bring one back
 - Unit tests over the save logic
 
