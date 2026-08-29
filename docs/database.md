@@ -44,7 +44,7 @@ the repository:
 
 Development uses `(localdb)\MSSQLLocalDB` with a trusted connection. Production would
 use the same provider with a different string — the provider never changes, only the
-connection. See [configuration.md](configuration.md).
+connection. Configuration is documented in full in the configuration guide (not yet written).
 
 ## Why the context is registered as a factory
 
