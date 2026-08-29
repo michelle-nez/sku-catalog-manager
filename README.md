@@ -100,8 +100,8 @@ Full setup detail, including the CLI equivalent of every step, is in
 | [docs/getting-started.md](docs/getting-started.md) | Setup from a fresh clone, how to verify it works, current deployment state |
 | [docs/architecture.md](docs/architecture.md) | Projects, layers, rendering model, data access, page flow |
 | [docs/database.md](docs/database.md) | Schema, entities, relationships, indexes, migrations, seed data, ER diagram |
-
-Being written next: configuration and troubleshooting.
+| [docs/configuration.md](docs/configuration.md) | Every setting, where it comes from, User Secrets, environments |
+| [docs/troubleshooting.md](docs/troubleshooting.md) | Setup, EF Core, data and UI problems specific to this app |
 
 ## Project status
 
